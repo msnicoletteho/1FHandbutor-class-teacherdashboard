@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Grammar Garden (MOE P1 English)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#EC4899',
+                        accent: '#F59E0B',
+                        success: '#10B981',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .font-heading { font-family: 'Fredoka', cursive, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <header class="bg-white shadow-sm border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="bg-primary text-white w-10 h-10 rounded-2xl flex items-center justify-center font-heading text-xl shadow-md">
+                📊
+            </div>
+            <div>
+                <h1 class="font-heading text-xl font-bold text-slate-900">Grammar Garden • Teacher Dashboard</h1>
+                <p class="text-xs text-slate-500">Live Analytics & Performance Monitoring (MOE Primary 1 English)</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <button onclick="refreshData()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 border border-indigo-200">
+                <i class="fa-solid fa-rotate"></i>
+                <span>Refresh Data</span>
+            </button>
+            <button onclick="openSetupGuide()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 border border-slate-200">
+                <i class="fa-solid fa-gear"></i>
+                <span>Backend Setup Guide</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-6 space-y-6">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase text-slate-400">Total Submissions</div>
+                    <div id="kpiTotalSubmissions" class="font-heading text-3xl font-bold text-slate-800 mt-1">0</div>
+                </div>
+                <div class="bg-indigo-50 text-primary p-3.5 rounded-2xl text-xl">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase text-slate-400">Class Average Score</div>
+                    <div id="kpiAvgScore" class="font-heading text-3xl font-bold text-emerald-600 mt-1">0</div>
+                </div>
+                <div class="bg-emerald-50 text-emerald-600 p-3.5 rounded-2xl text-xl">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase text-slate-400">Active Students</div>
+                    <div id="kpiActiveStudents" class="font-heading text-3xl font-bold text-amber-600 mt-1">0</div>
+                </div>
+                <div class="bg-amber-50 text-amber-600 p-3.5 rounded-2xl text-xl">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase text-slate-400">Top Difficulty</div>
+                    <div id="kpiTopLevel" class="font-heading text-3xl font-bold text-purple-600 mt-1">Medium</div>
+                </div>
+                <div class="bg-purple-50 text-purple-600 p-3.5 rounded-2xl text-xl">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left 2 Cols: Student Submission Table -->
+            <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-heading text-lg font-bold text-slate-900">Student Submission Log</h3>
+                            <p class="text-xs text-slate-500">Live records fetched from Google Sheets & Local Cache</p>
+                        </div>
+                        <span class="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">Real-time Feed</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-slate-400 uppercase font-bold">
+                                    <th class="py-3 px-3">Timestamp</th>
+                                    <th class="py-3 px-3">Student Name</th>
+                                    <th class="py-3 px-3">Class</th>
+                                    <th class="py-3 px-3">Level</th>
+                                    <th class="py-3 px-3 text-right">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="submissionTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                                <tr>
+                                    <td colspan="5" class="text-center py-8 text-slate-400">Loading submissions...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <span id="tableRecordCount">Showing 0 records</span>
+                    <button onclick="clearLocalStorageData()" class="text-rose-600 hover:text-rose-700 font-bold">Clear Local Cache</button>
+                </div>
+            </div>
+
+            <!-- Right Col: Performance Distribution Chart -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                <div>
+                    <h3 class="font-heading text-lg font-bold text-slate-900 mb-1">Score Distribution</h3>
+                    <p class="text-xs text-slate-500 mb-4">Breakdown by student performance tiers</p>
+                    <div class="relative h-64 flex items-center justify-center">
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-3.5 mt-4">
+                    <div class="flex items-center space-x-2 text-xs font-bold text-indigo-900 mb-1">
+                        <i class="fa-solid fa-lightbulb text-primary"></i>
+                        <span>Pedagogical Tip</span>
+                    </div>
+                    <p class="text-xs text-indigo-950 leading-relaxed">
+                        If students struggle with <strong>but</strong> vs <strong>and</strong>, assign more guided practice on opposite versus similar ideas during form debriefs.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="setupModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-heading text-xl font-bold text-slate-900">Google Apps Script Setup Guide</h3>
+                <button onclick="closeSetupGuide()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                    <h4 class="font-bold text-slate-800">Step 1: Create Google Sheet</h4>
+                    <p>Create a new Google Sheet and name columns in row 1: <code class="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-primary">Timestamp</code>, <code class="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-primary">StudentName</code>, <code class="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-primary">Class</code>, <code class="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-primary">Score</code>, <code class="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-primary">Level</code>, <code class="bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-primary">CommonMistakes</code>.</p>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                    <h4 class="font-bold text-slate-800">Step 2: Add Apps Script</h4>
+                    <p>Go to <strong>Extensions > Apps Script</strong>, clear existing code, and paste the code snippet below:</p>
+                    <pre class="bg-slate-900 text-slate-100 p-3 rounded-xl font-mono text-[10px] overflow-x-auto mt-2">
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    data.Timestamp,
+    data.StudentName,
+    data.Class,
+    data.Score,
+    data.Level,
+    data.CommonMistakes
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({"status":"success"})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var rows = sheet.getDataRange().getValues();
+  var headers = rows[0];
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      obj[headers[j]] = rows[i][j];
+    }
+    result.push(obj);
+  }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+                    </pre>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                    <h4 class="font-bold text-slate-800">Step 3: Deploy as Web App</h4>
+                    <p>Click <strong>Deploy > New deployment</strong>. Select type: <strong>Web app</strong>. Execute as: <strong>Me</strong>. Who has access: <strong>Anyone</strong>. Copy the generated Web App URL and paste it into both <code class="font-mono text-primary">GOOGLE_APPS_SCRIPT_URL</code> variables in the student app and teacher dashboard.</p>
+                </div>
+            </div>
+
+            <button onclick="closeSetupGuide()" class="w-full bg-primary text-white font-heading font-bold py-3 rounded-2xl shadow hover:bg-primary/90 transition text-sm">
+                Got it, Close Guide
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION: Teachers can paste their Google Apps Script Web App URL here
+        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyugyczCL8UQ78l0LqYqyZBDfWSJZZ4R5-B-SLCtEuQK233abYmQBpM3200iIAN13q-/exec";
+
+        let chartInstance = null;
+
+        function refreshData() {
+            let submissions = JSON.parse(localStorage.getItem('grammar_leaderboard') || '[]');
+
+            // If empty, supply mock sample data for teacher preview
+            if (submissions.length === 0) {
+                submissions = [
+                    { Timestamp: new Date().toISOString(), StudentName: "Emma Tan", Class: "1-Resilience", Score: 120, Level: "Challenge", CommonMistakes: "None" },
+                    { Timestamp: new Date().toISOString(), StudentName: "Lucas Lim", Class: "1-Resilience", Score: 95, Level: "Medium", CommonMistakes: "but vs and" },
+                    { Timestamp: new Date().toISOString(), StudentName: "Chloe Wong", Class: "1-Resilience", Score: 85, Level: "Medium", CommonMistakes: "None" },
+                    { Timestamp: new Date().toISOString(), StudentName: "Aiden Koh", Class: "1-Resilience", Score: 70, Level: "Easy", CommonMistakes: "or vs and" }
+                ];
+            }
+
+            updateDashboardKPIs(submissions);
+            renderTable(submissions);
+            renderChart(submissions);
+
+            // If valid URL configured, fetch live from Google Sheets
+            if (GOOGLE_APPS_SCRIPT_URL !== "PASTE_YOUR_WEB_APP_URL_HERE") {
+                fetch(GOOGLE_APPS_SCRIPT_URL)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            updateDashboardKPIs(data);
+                            renderTable(data);
+                            renderChart(data);
+                        }
+                    })
+                    .catch(err => console.log("Using cached/local records:", err));
+            }
+        }
+
+        function updateDashboardKPIs(data) {
+            document.getElementById('kpiTotalSubmissions').textContent = data.length;
+            
+            let totalScore = data.reduce((sum, item) => sum + Number(item.Score || 0), 0);
+            let avg = data.length > 0 ? Math.round(totalScore / data.length) : 0;
+            document.getElementById('kpiAvgScore').textContent = avg;
+
+            let uniqueStudents = new Set(data.map(item => item.StudentName)).size;
+            document.getElementById('kpiActiveStudents').textContent = uniqueStudents;
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('submissionTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">No submissions found yet.</td></tr>`;
+                document.getElementById('tableRecordCount').textContent = "Showing 0 records";
+                return;
+            }
+
+            // Sort descending by score
+            let sorted = [...data].sort((a, b) => Number(b.Score) - Number(a.Score));
+
+            sorted.forEach((item, idx) => {
+                let timeStr = item.Timestamp ? new Date(item.Timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent';
+                let row = document.createElement('tr');
+                row.className = idx % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/50 hover:bg-slate-50';
+                row.innerHTML = `
+                    <td class="py-3 px-3 text-slate-500">${timeStr}</td>
+                    <td class="py-3 px-3 font-bold text-slate-800">${item.StudentName}</td>
+                    <td class="py-3 px-3">${item.Class || 'P1'}</td>
+                    <td class="py-3 px-3"><span class="bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-md font-semibold text-[10px]">${item.Level || 'Medium'}</span></td>
+                    <td class="py-3 px-3 text-right font-bold text-primary">${item.Score} pts</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('tableRecordCount').textContent = `Showing ${sorted.length} records`;
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            let high = data.filter(i => Number(i.Score) >= 100).length;
+            let mid = data.filter(i => Number(i.Score) >= 60 && Number(i.Score) < 100).length;
+            let developing = data.filter(i => Number(i.Score) < 60).length;
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mastery (100+ pts)', 'Proficient (60-99 pts)', 'Developing (<60 pts)'],
+                    datasets: [{
+                        data: [high, mid, developing],
+                        backgroundColor: ['#10B981', '#4F46E5', '#F59E0B'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10, family: 'Inter' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function clearLocalStorageData() {
+            if (confirm("Are you sure you want to clear local leaderboard records?")) {
+                localStorage.removeItem('grammar_leaderboard');
+                refreshData();
+            }
+        }
+
+        function openSetupGuide() {
+            document.getElementById('setupModal').classList.remove('hidden');
+        }
+
+        function closeSetupGuide() {
+            document.getElementById('setupModal').classList.add('hidden');
+        }
+
+        window.onload = function() {
+            refreshData();
+        };
+    </script>
+</body>
+</html>
